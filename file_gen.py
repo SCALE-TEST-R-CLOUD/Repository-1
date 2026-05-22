@@ -12,7 +12,7 @@ from datetime import datetime
 
 OUTPUT_DIR = "random_repo_content-latest"
 
-COMMITS_COUNT = 1
+COMMITS_COUNT = 100
 FILES_PER_COMMIT = 5
 FILE_SIZE_KB = 256
 
