@@ -1,86 +1,140 @@
 import os
 import random
 import string
+import subprocess
+import time
 from pathlib import Path
+from datetime import datetime
 
-# ==== CONFIG ====
+# =========================
+# CONFIG
+# =========================
+
 OUTPUT_DIR = "random_repo_content-latest"
-NUM_FILES = 25
-FILE_SIZE_MB = 1
 
-# Random nesting depth
+COMMITS_COUNT = 100
+FILES_PER_COMMIT = 5
+FILE_SIZE_KB = 256
+
+GIT_REMOTE_URL = "https://github.com/SCALE-TEST-R-CLOUD/Repository-1.git"
+GIT_BRANCH = "main"
+
 MIN_DEPTH = 1
 MAX_DEPTH = 5
 
-# File extensions
 EXTENSIONS = [
     ".txt", ".json", ".xml", ".csv", ".log",
     ".md", ".yaml", ".yml", ".js", ".py",
     ".java", ".html", ".css", ".sql", ".conf"
 ]
 
-FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024
+FILE_SIZE_BYTES = FILE_SIZE_KB * 1024
 
-# Create base directory
+# =========================
+# SETUP
+# =========================
+
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 
 def random_name(min_len=5, max_len=15):
-    length = random.randint(min_len, max_len)
     chars = string.ascii_lowercase + string.digits
+    length = random.randint(min_len, max_len)
     return ''.join(random.choices(chars, k=length))
 
 
-def random_string(length=200):
+def random_content(length=200):
     chars = string.ascii_letters + string.digits + " \n"
     return ''.join(random.choices(chars, k=length))
 
 
-def create_random_file(file_path, target_size):
-    with open(file_path, "w", encoding="utf-8") as f:
+def create_random_file(path, size_bytes):
+    with open(path, "w", encoding="utf-8") as f:
         written = 0
 
-        while written < target_size:
-            line = random_string() + "\n"
+        while written < size_bytes:
+            line = random_content() + "\n"
             f.write(line)
             written += len(line.encode("utf-8"))
 
 
-print(f"Creating {NUM_FILES} random files...")
+def run_git(cmd):
+    subprocess.run(cmd, check=True)
 
-created_paths = set()
 
-for _ in range(NUM_FILES):
+# =========================
+# INIT REPO
+# =========================
 
-    # Random folder depth
-    depth = random.randint(MIN_DEPTH, MAX_DEPTH)
+os.chdir(OUTPUT_DIR)
 
-    # Random nested folders
-    folders = [random_name() for _ in range(depth)]
+if not Path(".git").exists():
+    print("Initializing repository...")
+    run_git(["git", "init"])
 
-    # Random file name
-    file_name = random_name() + random.choice(EXTENSIONS)
+# Add remote if missing
+try:
+    remotes = subprocess.check_output(["git", "remote"]).decode().split()
 
-    # Full directory path
-    dir_path = os.path.join(OUTPUT_DIR, *folders)
+    if "origin" not in remotes:
+        run_git(["git", "remote", "add", "origin", GIT_REMOTE_URL])
 
-    # Create directories
-    Path(dir_path).mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
-    # Full file path
-    file_path = os.path.join(dir_path, file_name)
 
-    # Avoid duplicates
-    while file_path in created_paths:
+# =========================
+# CREATE COMMITS
+# =========================
+
+for commit_no in range(1, COMMITS_COUNT + 1):
+
+    print(f"\n========== Commit {commit_no}/{COMMITS_COUNT} ==========")
+
+    for _ in range(FILES_PER_COMMIT):
+
+        # Random nested path
+        depth = random.randint(MIN_DEPTH, MAX_DEPTH)
+        folders = [random_name() for _ in range(depth)]
+
+        dir_path = os.path.join(*folders)
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
+
+        # Random filename
         file_name = random_name() + random.choice(EXTENSIONS)
         file_path = os.path.join(dir_path, file_name)
 
-    created_paths.add(file_path)
+        # Create file
+        create_random_file(file_path, FILE_SIZE_BYTES)
 
-    # Create file
-    create_random_file(file_path, FILE_SIZE_BYTES)
+        print(f"Created: {file_path}")
 
-    print(f"Created: {file_path}")
+    # Git add
+    run_git(["git", "add", "."])
+
+    # Commit message
+    commit_message = (
+        f"auto commit #{commit_no} - "
+        f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
+    # Commit
+    try:
+        run_git(["git", "commit", "-m", commit_message])
+        print(f"Committed: {commit_message}")
+
+    except subprocess.CalledProcessError:
+        print("Nothing to commit.")
+
+    # Optional delay for realistic timestamps
+    time.sleep(1)
+
+# =========================
+# PUSH
+# =========================
+
+print("\nPushing all commits...")
+run_git(["git", "push", "-u", "origin", GIT_BRANCH])
 
 print("\nDone.")
-print(f"Generated {NUM_FILES} files of ~{FILE_SIZE_MB}MB each in '{OUTPUT_DIR}'")
+print(f"Successfully created and pushed {COMMITS_COUNT} commits.")
