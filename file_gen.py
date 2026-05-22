@@ -102,12 +102,14 @@ for commit_no in range(1, COMMITS_COUNT + 1):
     # Optional delay for realistic timestamps
     time.sleep(1)
 
+    print("\nPushing all commits...")
+    run_git(["git", "push"])
+
 # =========================
 # PUSH
 # =========================
 
-print("\nPushing all commits...")
-run_git(["git", "push"])
+
 
 print("\nDone.")
 print(f"Successfully created and pushed {COMMITS_COUNT} commits.")
