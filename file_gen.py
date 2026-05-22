@@ -12,12 +12,9 @@ from datetime import datetime
 
 OUTPUT_DIR = "random_repo_content-latest"
 
-COMMITS_COUNT = 100
+COMMITS_COUNT = 1
 FILES_PER_COMMIT = 5
 FILE_SIZE_KB = 256
-
-GIT_REMOTE_URL = "https://github.com/SCALE-TEST-R-CLOUD/Repository-1.git"
-GIT_BRANCH = "main"
 
 MIN_DEPTH = 1
 MAX_DEPTH = 5
@@ -33,8 +30,6 @@ FILE_SIZE_BYTES = FILE_SIZE_KB * 1024
 # =========================
 # SETUP
 # =========================
-
-Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 
 def random_name(min_len=5, max_len=15):
@@ -60,28 +55,6 @@ def create_random_file(path, size_bytes):
 
 def run_git(cmd):
     subprocess.run(cmd, check=True)
-
-
-# =========================
-# INIT REPO
-# =========================
-
-os.chdir(OUTPUT_DIR)
-
-if not Path(".git").exists():
-    print("Initializing repository...")
-    run_git(["git", "init"])
-
-# Add remote if missing
-try:
-    remotes = subprocess.check_output(["git", "remote"]).decode().split()
-
-    if "origin" not in remotes:
-        run_git(["git", "remote", "add", "origin", GIT_REMOTE_URL])
-
-except Exception:
-    pass
-
 
 # =========================
 # CREATE COMMITS
@@ -134,7 +107,7 @@ for commit_no in range(1, COMMITS_COUNT + 1):
 # =========================
 
 print("\nPushing all commits...")
-run_git(["git", "push", "-u", "origin", GIT_BRANCH])
+run_git(["git", "push"])
 
 print("\nDone.")
 print(f"Successfully created and pushed {COMMITS_COUNT} commits.")
