@@ -4,9 +4,9 @@ import string
 from pathlib import Path
 
 # ==== CONFIG ====
-OUTPUT_DIR = "random_repo_content-1"
-NUM_FILES = 100
-FILE_SIZE_MB = 50
+OUTPUT_DIR = "random_repo_content-2"
+NUM_FILES = 25
+FILE_SIZE_MB = 40
 
 # Different file extensions
 EXTENSIONS = [
